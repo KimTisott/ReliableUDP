@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
 	float statsAccumulator = 0.0f;
 
 	FlowControl flowControl;
-
+	int packetCounter = 0;
 	while (true)
 	{
 		// update flow control
@@ -205,9 +205,12 @@ int main(int argc, char* argv[])
 
 		while (sendAccumulator > 1.0f / sendRate)
 		{
-			unsigned char packet[PacketSize];
-			memset(packet, 0, sizeof(packet));
-			connection.SendPacket(packet, sizeof(packet));
+			string packet = "Hello World ";
+			packet += to_string(packetCounter) + "\n";
+			if (connection.SendPacket((const unsigned char*)packet.c_str(), sizeof(packet)))
+			{
+				packetCounter++;
+			}
 			sendAccumulator -= 1.0f / sendRate;
 		}
 

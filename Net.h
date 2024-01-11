@@ -1001,6 +1001,7 @@ namespace net
 			reliabilitySystem.PacketReceived(packet_sequence, received_bytes - header);
 			reliabilitySystem.ProcessAck(packet_ack, packet_ack_bits);
 			std::memcpy(data, packet + header, received_bytes - header);
+			printf("%s", data);
 			return received_bytes - header;
 		}
 
