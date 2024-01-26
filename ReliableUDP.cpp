@@ -128,7 +128,12 @@ int main(int argc, char* argv[])
 
 	Mode mode = Server;
 	Address address;
-
+	/*
+	* We have to introduce a new argument as a file name
+	* We are going to put it as the first argument and make it mandatory
+	* We are going to change argc>=2 -> argc >= 3 and validate the 
+	* file name on argv[1] as well as IP Address on argv[2] 
+	*/
 	if (argc >= 2)
 	{
 		int a, b, c, d;
@@ -157,7 +162,16 @@ int main(int argc, char* argv[])
 		printf("could not start connection on port %d\n", port);
 		return 1;
 	}
-
+	/*
+	* 
+	* CLIENT check the file is there or not
+	* before open the connection.
+	* Also, checking for its content. If the file is empty, 
+	* print an error message and stop the program.
+	* SERVER will do File/IO error handling, if
+	* the file cannot be opened, stop the program.
+	* 
+	*/
 	if (mode == Client)
 		connection.Connect(address);
 	else
@@ -169,6 +183,14 @@ int main(int argc, char* argv[])
 
 	FlowControl flowControl;
 	int packetCounter = 0;
+	/*
+	* CLIENT ONLY
+	* Open the validated file and get its metadata (file name and file size)
+	* and file content
+	* 
+	* Calculate how many packet that is needed to send
+	* and split the file into pieces to be sent
+	*/
 	while (true)
 	{
 		// update flow control
@@ -205,6 +227,10 @@ int main(int argc, char* argv[])
 
 		while (sendAccumulator > 1.0f / sendRate)
 		{
+			/*
+			* CLIENT send file metadata and checksum firstly and then
+			* put each piece into a packet and send the packet using SendPacket
+			*/
 			string packet = "Hello World ";
 			packet += to_string(packetCounter) + "\n";
 			if (connection.SendPacket((const unsigned char*)packet.c_str(), sizeof(packet)))
@@ -214,8 +240,19 @@ int main(int argc, char* argv[])
 			sendAccumulator -= 1.0f / sendRate;
 		}
 
+		
 		while (true)
 		{
+			/*
+			* SERVER is going to receive metadata and content
+			* in the packet and store it into a buffer to 
+			* pack the pieces when the last packet is
+			* received.
+			* When the last packet is received,
+			* SERVER should check for checksum 
+			* If it's OK, write to the disk
+			* 
+			*/
 			unsigned char packet[256];
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
