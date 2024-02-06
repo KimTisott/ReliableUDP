@@ -23,10 +23,11 @@ const int ProtocolId = 0x11223344;
 const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
-const int PacketSize = 256;
 const int kErrorNum = -1;
 const char kInvalidFilenameChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
 const int kFilenameMaxLength = 255;
+const int kPacketSize = 500;
+const int kFileMaxSize = 31 * 1024 * 1024; // 31MB
 
 class FlowControl
 {
@@ -184,6 +185,12 @@ int main(int argc, char* argv[])
 		printf("could not start connection on port %d\n", port);
 		return 1;
 	}
+
+	if (mode == Client)
+		connection.Connect(address);
+	else
+		connection.Listen();
+
 	/*
 	* 
 	* CLIENT check the file is there or not
@@ -194,47 +201,22 @@ int main(int argc, char* argv[])
 	* the file cannot be opened, stop the program.
 	* 
 	*/
-	FILE* fp = fopen(fileName,"rb");
-	char buffer[500] = "";
-	size_t bytesRead = 0;
-	if (fp == NULL)
+	FILE* file = fopen(fileName,"rb");
+	if (file == NULL)
 	{
 		printf("Cannot open file: %s", fileName);
 		return kErrorNum;
 	}
 
-	// Get the file size
-	fseek(fp, 0L, SEEK_END);
-	int fileSize= ftell(fp);
-	rewind(fp);
-
-	// Check if the file is empty or not
-	if (bytesRead = fread(buffer, sizeof(unsigned char), 500, fp) == 0)
+	// Load the file contents into a buffer
+	unsigned char fileBuffer[kFileMaxSize];
+	size_t fileSize;
+	if (!(fileSize = fread(&fileBuffer, sizeof(unsigned char), kFileMaxSize, file)))
 	{
-		printf("The file is empty, cannot send an empty file");
-		if (fclose(fp) != 0)
-		{
-			printf("Cannot close file");
-			return kErrorNum;
-		}
+		printf("Cannot read file: %s", fileName);
 		return kErrorNum;
 	}
-
-	// If file has data
-	else 
-	{
-		while (!feof(fp))
-		{
-			if (bytesRead = fread(buffer, sizeof(unsigned char), 500, fp) != 0)
-			{
-				// Calling function to generate packet
-			}
-		}
-	}
-	if (mode == Client)
-		connection.Connect(address);
-	else
-		connection.Listen();
+	int packetCount = fileSize / kPacketSize;
 
 	bool connected = false;
 	float sendAccumulator = 0.0f;
