@@ -24,8 +24,9 @@ const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
 const int PacketSize = 256;
-const int kFileName = 255;
 const int kErrorNum = -1;
+const char kInvalidFilenameChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
+const int kFilenameMaxLength = 255;
 
 class FlowControl
 {
@@ -140,8 +141,24 @@ int main(int argc, char* argv[])
 	*/
 	if (argc >= 3)
 	{
-		int a, b, c, d;
+		char* filename = argv[1];
+		if (strlen(filename) > kFilenameMaxLength)
+		{
+			printf("Filename should not be longer than %d characters", kFilenameMaxLength);
+			return kErrorNum;
+		}
 
+		for (int i = 0; i < sizeof(kInvalidFilenameChars); i++)
+		{
+			char invalidChar = kInvalidFilenameChars[i];
+			if (strchr(filename, invalidChar) != NULL)
+			{
+				printf("Filename has invalid character: %c", invalidChar);
+				return kErrorNum;
+			}
+		}
+
+		int a, b, c, d;
 		if (sscanf(argv[2], "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
 			mode = Client;
