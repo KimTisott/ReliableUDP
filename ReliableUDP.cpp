@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Net.h"
+#pragma warning(disable : 4996)
 
 //#define SHOW_ACKS
 
@@ -23,6 +24,8 @@ const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
 const int PacketSize = 256;
+const int kFileName = 255;
+const int kErrorNum = -1;
 
 class FlowControl
 {
@@ -118,6 +121,7 @@ private:
 
 int main(int argc, char* argv[])
 {
+	char fileName[] = "";
 	// parse command line
 
 	enum Mode
@@ -134,15 +138,16 @@ int main(int argc, char* argv[])
 	* We are going to change argc>=2 -> argc >= 3 and validate the 
 	* file name on argv[1] as well as IP Address on argv[2] 
 	*/
-	if (argc >= 2)
+	if (argc >= 3)
 	{
 		int a, b, c, d;
-#pragma warning(suppress : 4996)
-		if (sscanf(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
+
+		if (sscanf(argv[2], "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
 		}
+		strcpy(fileName, argv[1]);
 	}
 
 	// initialize
@@ -172,6 +177,43 @@ int main(int argc, char* argv[])
 	* the file cannot be opened, stop the program.
 	* 
 	*/
+	FILE* fp = fopen(fileName,"rb");
+	char buffer[500] = "";
+	size_t bytesRead = 0;
+	if (fp == NULL)
+	{
+		printf("Cannot open file: %s", fileName);
+		return kErrorNum;
+	}
+
+	// Get the file size
+	fseek(fp, 0L, SEEK_END);
+	int fileSize= ftell(fp);
+	rewind(fp);
+
+	// Check if the file is empty or not
+	if (bytesRead = fread(buffer, sizeof(unsigned char), 500, fp) == 0)
+	{
+		printf("The file is empty, cannot send an empty file");
+		if (fclose(fp) != 0)
+		{
+			printf("Cannot close file");
+			return kErrorNum;
+		}
+		return kErrorNum;
+	}
+
+	// If file has data
+	else 
+	{
+		while (!feof(fp))
+		{
+			if (bytesRead = fread(buffer, sizeof(unsigned char), 500, fp) != 0)
+			{
+				// Calling function to generate packet
+			}
+		}
+	}
 	if (mode == Client)
 		connection.Connect(address);
 	else
