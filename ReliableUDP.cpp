@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "hash-library/md5.h"
+#include "hash-library/md5.cpp"
 #include "Net.h"
 #pragma warning(disable : 4996)
 
@@ -123,6 +125,11 @@ private:
 
 int main(int argc, char* argv[])
 {
+	std::string text = "hello world";
+
+	MD5 md5;
+	md5.add(text.c_str(), text.size());
+	cout << md5.getHash();
 	char fileName[] = "";
 	// parse command line
 
@@ -209,7 +216,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Load the file contents into a buffer
-	unsigned char fileBuffer[kFileMaxSize];
+	unsigned char* fileBuffer = (unsigned char*)malloc(kFileMaxSize);
 	size_t fileSize;
 	if (!(fileSize = fread(&fileBuffer, sizeof(unsigned char), kFileMaxSize, file)))
 	{
@@ -346,6 +353,8 @@ int main(int argc, char* argv[])
 	}
 
 	ShutdownSockets();
+
+	free(fileBuffer);
 
 	return 0;
 }
