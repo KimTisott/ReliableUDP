@@ -26,7 +26,7 @@ const int ProtocolId = 0x11223344;
 const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
-
+const char* kPacketDelimiter = "|";
 
 class FlowControl
 {
@@ -229,7 +229,7 @@ int main(int argc, char* argv[])
 	}
 
 	// Load the file contents into a buffer
-	unsigned char* fileBuffer = (unsigned char*)malloc(kFileMaxSize);
+	char* fileBuffer = (char*)malloc(kFileMaxSize);
 	size_t fileSize;
 	if (!(fileSize = fread(&fileBuffer, sizeof(unsigned char), kFileMaxSize, file)))
 	{
@@ -294,11 +294,15 @@ int main(int argc, char* argv[])
 			*/
 			string packet = fileName + '|' + packetTotal + '|' + packetCounter + '|';
 			int remaining = kPacketSize - packet.length();
-			// missing appending the fileBuffer to the packet (not sure how to do it)
-			if (connection.SendPacket((const unsigned char*)packet.c_str(), sizeof(packet)))
+			if (remaining > 0)
 			{
-				packetCounter++;
-				fileBuffer += remaining;
+				char* chunk = NULL;
+				strncpy(chunk, fileBuffer, remaining);
+				if (connection.SendPacket((const unsigned char*)packet.c_str(), sizeof(packet)))
+				{
+					packetCounter++;
+					fileBuffer += remaining;
+				}
 			}
 			sendAccumulator -= 1.0f / sendRate;
 		}
@@ -315,10 +319,46 @@ int main(int argc, char* argv[])
 			* If it's OK, write to the disk
 			* 
 			*/
-			unsigned char packet[256];
+			unsigned char packet[kPacketSize];
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 				break;
+
+			char* filename = NULL;
+			int packetTotal;
+			int packetOrder;
+			char* fileData = NULL;
+			char* token = NULL;
+			for (int i = 0; i < 4; i++)
+			{
+				token = strtok((char*)packet, kPacketDelimiter);
+				if (token == NULL)
+				{
+					// could not find one of the data fields... corrupted packet?
+				}
+				else
+				{ // split data fields for further analysis
+					switch (i)
+					{
+						case 0:
+						{ // filename
+							strcpy(filename, token);
+						}
+						case 1:
+						{ // packet total
+							packetTotal = atoi(token);
+						}
+						case 2:
+						{ // packet order
+							packetOrder = atoi(token);
+						}
+						case 3:
+						{ // file data
+							strcpy(fileData, token);
+						}
+					}
+				}
+			}
 		}
 
 		// show packets that were acked this frame
