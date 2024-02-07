@@ -11,6 +11,7 @@
 
 #include "hash-library/md5.h"
 #include "hash-library/md5.cpp"
+#include "ReliableUDP.h"
 #include "Net.h"
 #pragma warning(disable : 4996)
 
@@ -25,11 +26,7 @@ const int ProtocolId = 0x11223344;
 const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
-const int kErrorNum = -1;
-const char kInvalidFilenameChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
-const int kFilenameMaxLength = 255;
-const int kPacketSize = 500;
-const int kFileMaxSize = 31 * 1024 * 1024; // 31MB
+
 
 class FlowControl
 {
@@ -125,11 +122,14 @@ private:
 
 int main(int argc, char* argv[])
 {
-	std::string text = "hello world";
-
-	MD5 md5;
-	md5.add(text.c_str(), text.size());
-	cout << md5.getHash();
+	// Method to get hash from the string
+	/*
+	*	std::string text = "hello world";
+	*	MD5 md5;
+	*	md5.add(text.c_str(), text.size());
+	*	cout << md5.getHash(); 
+	*/
+	
 	char fileName[kFilenameMaxLength] = {};
 	// parse command line
 
@@ -147,7 +147,15 @@ int main(int argc, char* argv[])
 	* We are going to change argc>=2 -> argc >= 3 and validate the 
 	* file name on argv[1] as well as IP Address on argv[2] 
 	*/
-	if (argc >= 3)
+	for (int i = 0; i < argc; i++)
+	{
+		if (strcmp(argv[i], "-h") == 0)
+		{
+			displayHelp();
+			return kErrorNum;
+		}
+	}
+	if (argc == 3)
 	{
 		char* filenameArg = argv[1];
 		if (strlen(filenameArg) > kFilenameMaxLength)
@@ -173,6 +181,11 @@ int main(int argc, char* argv[])
 			address = Address(a, b, c, d, ServerPort);
 		}
 		strcpy(fileName, filenameArg);
+	}
+	else
+	{
+		displayHelp();
+		return kErrorNum;
 	}
 
 	// initialize
