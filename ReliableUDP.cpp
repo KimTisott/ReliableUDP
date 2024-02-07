@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 	MD5 md5;
 	md5.add(text.c_str(), text.size());
 	cout << md5.getHash();
-	char fileName[] = "";
+	char fileName[kFilenameMaxLength] = {};
 	// parse command line
 
 	enum Mode
@@ -149,8 +149,8 @@ int main(int argc, char* argv[])
 	*/
 	if (argc >= 3)
 	{
-		char* filename = argv[1];
-		if (strlen(filename) > kFilenameMaxLength)
+		char* filenameArg = argv[1];
+		if (strlen(filenameArg) > kFilenameMaxLength)
 		{
 			printf("Filename should not be longer than %d characters", kFilenameMaxLength);
 			return kErrorNum;
@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < sizeof(kInvalidFilenameChars); i++)
 		{
 			char invalidChar = kInvalidFilenameChars[i];
-			if (strchr(filename, invalidChar) != NULL)
+			if (strchr(fileName, invalidChar) != NULL)
 			{
 				printf("Filename has invalid character: %c", invalidChar);
 				return kErrorNum;
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
 		}
-		strcpy(fileName, argv[1]);
+		strcpy(fileName, filenameArg);
 	}
 
 	// initialize
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
 	* the file cannot be opened, stop the program.
 	* 
 	*/
-	FILE* file = fopen(fileName,"rb");
+	FILE* file = fopen(fileName, "rb");
 	if (file == NULL)
 	{
 		printf("Cannot open file: %s", fileName);
@@ -223,14 +223,14 @@ int main(int argc, char* argv[])
 		printf("Cannot read file: %s", fileName);
 		return kErrorNum;
 	}
-	int packetCount = fileSize / kPacketSize;
+	int packetTotal = fileSize / kPacketSize;
 
 	bool connected = false;
 	float sendAccumulator = 0.0f;
 	float statsAccumulator = 0.0f;
 
 	FlowControl flowControl;
-	int packetCounter = 0;
+	int packetCounter = 1;
 	/*
 	* CLIENT ONLY
 	* Open the validated file and get its metadata (file name and file size)
@@ -279,15 +279,16 @@ int main(int argc, char* argv[])
 			* CLIENT send file metadata and checksum firstly and then
 			* put each piece into a packet and send the packet using SendPacket
 			*/
-			string packet = "Hello World ";
-			packet += to_string(packetCounter) + "\n";
+			string packet = fileName + '|' + packetTotal + '|' + packetCounter + '|';
+			int remaining = kPacketSize - packet.length();
+			// missing appending the fileBuffer to the packet (not sure how to do it)
 			if (connection.SendPacket((const unsigned char*)packet.c_str(), sizeof(packet)))
 			{
 				packetCounter++;
+				fileBuffer += remaining;
 			}
 			sendAccumulator -= 1.0f / sendRate;
 		}
-
 		
 		while (true)
 		{
