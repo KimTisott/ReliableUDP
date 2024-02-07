@@ -298,6 +298,7 @@ int main(int argc, char* argv[])
 			{
 				char* chunk = NULL;
 				strncpy(chunk, fileBuffer, remaining);
+				strcat((char*)packet.c_str(), chunk);
 				if (connection.SendPacket((const unsigned char*)packet.c_str(), sizeof(packet)))
 				{
 					packetCounter++;
