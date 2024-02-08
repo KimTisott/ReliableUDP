@@ -8,4 +8,5 @@ const int kFilenameMaxLength = 255;
 const int kPacketSize = 500;
 const int kFileMaxSize = 31 * 1024 * 1024; // 31MB
 void displayHelp();
-int unpackIncomingPacketMetaData(char receiveData[]);
+static char* packData(char* fileName, short packetTotal, short packetOrder, char* fileContent);
+static void unpackData(char* packet, char* fileName, int packetTotal, int packetOrder, char* fileContent);

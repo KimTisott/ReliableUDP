@@ -26,7 +26,6 @@ const int ProtocolId = 0x11223344;
 const float DeltaTime = 1.0f / 30.0f;
 const float SendRate = 1.0f / 30.0f;
 const float TimeOut = 10.0f;
-const char* kPacketDelimiter = "|";
 
 class FlowControl
 {
@@ -325,41 +324,7 @@ int main(int argc, char* argv[])
 			if (bytes_read == 0)
 				break;
 
-			char* filename = NULL;
-			int packetTotal;
-			int packetOrder;
-			char* fileData = NULL;
-			char* token = NULL;
-			for (int i = 0; i < 4; i++)
-			{
-				token = strtok((char*)packet, kPacketDelimiter);
-				if (token == NULL)
-				{
-					// could not find one of the data fields... corrupted packet?
-				}
-				else
-				{ // split data fields for further analysis
-					switch (i)
-					{
-						case 0:
-						{ // filename
-							strcpy(filename, token);
-						}
-						case 1:
-						{ // packet total
-							packetTotal = atoi(token);
-						}
-						case 2:
-						{ // packet order
-							packetOrder = atoi(token);
-						}
-						case 3:
-						{ // file data
-							strcpy(fileData, token);
-						}
-					}
-				}
-			}
+			
 		}
 
 		// show packets that were acked this frame
