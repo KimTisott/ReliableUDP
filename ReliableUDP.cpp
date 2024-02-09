@@ -177,9 +177,15 @@ int main(int argc, char* argv[])
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
 		}
+		
 		strcpy(iFileName, filenameArg);
 	}
-	else if (argc != 1)
+	else if (argc == 2)
+	{
+		char* filenameArg = argv[1];
+		strcpy(iFileName, filenameArg);
+	}
+	else 
 	{
 		displayHelp();
 		return kErrorNum;
@@ -237,27 +243,21 @@ int main(int argc, char* argv[])
 		{
 			printf("Cannot open file: %s", iFileName);
 			return kErrorNum;
-			fseek(file, 0L, SEEK_END);
-			fileSize = ftell(file);
-			rewind(file);
-			iPacketTotal = (fileSize / kFileContentSize) + 1;
-			
 		}
+		fseek(file, 0L, SEEK_END);
+		fileSize = ftell(file);
+		rewind(file);
+		iPacketTotal = (fileSize / kFileContentSize) + 1;
 	}
-	FILE* ofile = NULL;
-	if (mode == Server)
+	else if (mode == Server)
 	{
-		ofile = fopen(iFileName, "wb");
-		if (ofile == NULL)
+		file = fopen(iFileName, "wb");
+		if (file == NULL)
 		{
 			printf("Cannot open file: %s", iFileName);
 			return kErrorNum;
 		}
 	}
-
-	
-	
-	
 
 
 	bool connected = false;
@@ -314,24 +314,23 @@ int main(int argc, char* argv[])
 			* CLIENT send file metadata and checksum firstly and then
 			* put each piece into a packet and send the packet using SendPacket
 			*/
-
-
-
-			if (!feof(file))
+			if (mode == Client)
 			{
-				if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
+				if (!feof(file))
 				{
-					packData(iPacket, iFileName, iPacketTotal, iPacketOrder, iFileContent);
-					if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
+					if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
 					{
-						iPacketOrder++;
+						packData(iPacket, iFileName, iPacketTotal, iPacketOrder, iFileContent);
+						if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
+						{
+							iPacketOrder++;
+						}
 					}
+					
 				}
-
-
-
-				sendAccumulator -= 1.0f / sendRate;
 			}
+			sendAccumulator -= 1.0f / sendRate;
+		}
 
 			while (true)
 			{
@@ -363,7 +362,7 @@ int main(int argc, char* argv[])
 					printf("\nOK: %d", status);
 					if (status == 1)
 					{
-						fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), ofile);
+						fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), file);
 						iPacketOrder++;
 					}
 				}
@@ -414,11 +413,10 @@ int main(int argc, char* argv[])
 			}
 
 			net::wait(DeltaTime);
-		}
-		fclose(file);
-		fclose(ofile);
-		ShutdownSockets();
-
-		return 0;
 	}
+	fclose(file);
+	ShutdownSockets();
+
+	return 0;
 }
+
