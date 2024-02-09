@@ -20,27 +20,26 @@ void displayHelp()
 
 void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize], short packetTotal, short packetOrder, unsigned char fileContent[kFileContentSize])
 {
-    memcpy(packet + kUdpHeaderSize, fileName, kFileNameSize);
-    memcpy(packet + kUdpHeaderSize + kFileNameSize, &packetTotal, kPacketTotalSize);
-    memcpy(packet + kUdpHeaderSize + kFileNameSize + kPacketTotalSize, &packetOrder, kPacketOrderSize);
-    memcpy(packet + kUdpHeaderSize + kFileNameSize + kPacketTotalSize + kPacketOrderSize, fileContent, kFileContentSize);
+    memcpy(packet, fileName, kFileNameSize);
+    memcpy(packet + kFileNameSize, &packetTotal, kPacketTotalSize);
+    memcpy(packet + kFileNameSize + kPacketTotalSize, &packetOrder, kPacketOrderSize);
+    memcpy(packet + kFileNameSize + kPacketTotalSize + kPacketOrderSize, fileContent, kFileContentSize);
     char checksum[kChecksumSize + 1];
     generateChecksum(checksum, packet);
     checksum[kChecksumSize] = '\0';
-    printf("Checksum: %s", checksum);
-    memcpy(packet + kUdpHeaderSize + kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize, checksum, kChecksumSize);
+    memcpy(packet + kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize, checksum, kChecksumSize);
 }
 
 void unpackData(unsigned char packet[kPacketSize], char fileName[kFileNameSize + 1], unsigned short* packetTotal, unsigned short* packetOrder, unsigned char fileContent[kFileContentSize], char checksum[kChecksumSize + 1])
 {
-    memcpy(fileName, packet + kUdpHeaderSize, kFileNameSize);
+    memcpy(fileName, packet, kFileNameSize);
     fileName[kFileNameSize] = '\0';
-    *packetTotal = packet[kUdpHeaderSize + kFileNameSize];
-    *packetTotal += packet[kUdpHeaderSize + kFileNameSize + 1] << 8;
-    *packetOrder = packet[kUdpHeaderSize + kFileNameSize + kPacketTotalSize];
-    *packetOrder += packet[kUdpHeaderSize + kFileNameSize + kPacketTotalSize + 1] << 8;
-    memcpy(fileContent, packet + kUdpHeaderSize + kFileNameSize + kPacketTotalSize + kPacketOrderSize, kFileContentSize);
-    memcpy(checksum, packet + kUdpHeaderSize + kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize, kChecksumSize);
+    *packetTotal = packet[kFileNameSize];
+    *packetTotal += packet[kFileNameSize + 1] << 8;
+    *packetOrder = packet[kFileNameSize + kPacketTotalSize];
+    *packetOrder += packet[kFileNameSize + kPacketTotalSize + 1] << 8;
+    memcpy(fileContent, packet + kFileNameSize + kPacketTotalSize + kPacketOrderSize, kFileContentSize);
+    memcpy(checksum, packet + kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize, kChecksumSize);
     checksum[kChecksumSize] = '\0';
 }
 

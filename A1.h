@@ -1,11 +1,13 @@
-const char kInvalidFilenameChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
-const int kUdpHeaderSize = 12;
 const int kFileNameSize = 50;
+const int kIPAddressSize = 15;
 const int kPacketTotalSize = sizeof(short);
 const int kPacketOrderSize = sizeof(short);
 const int kChecksumSize = 32;
-const int kFileContentSize = 384 - kFileNameSize - kPacketTotalSize - kPacketOrderSize - kChecksumSize;
-const int kPacketSize = kUdpHeaderSize + kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize + kChecksumSize;
+const int kFileContentSize = 360 - kFileNameSize - kPacketTotalSize - kPacketOrderSize - kChecksumSize;
+const int kPacketSize = kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize + kChecksumSize;
+const char kInvalidFilenameChars[] = { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
+const char kFileNameDefault[kFileNameSize] = "dataInterchangeFile";
+const char kIPAddressDefault[kIPAddressSize] = "127.0.0.1";
 
 enum ERROR {
 	ARGUMENT_INVALIDNUMBER = 2,

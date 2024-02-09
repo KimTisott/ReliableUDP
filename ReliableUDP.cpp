@@ -127,7 +127,6 @@ int main(int argc, char* argv[])
 	*	cout << md5.getHash();
 	*/
 
-	char iFileName[kFileNameSize] = {};
 	// parse command line
 
 	enum Mode
@@ -153,45 +152,58 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if (argc > 1)
-	{
-		char* fileName = argv[1];
-		if (strlen(fileName) > kFileNameSize)
-		{
-			printf("Filename should not be longer than %d characters", kFileNameSize);
-			return FILENAME_TOOLONG;
-		}
-
-		for (int i = 0; i < sizeof(kInvalidFilenameChars); i++)
-		{
-			char invalidChar = kInvalidFilenameChars[i];
-			if (strchr(fileName, invalidChar) != NULL)
-			{
-				printf("Filename has invalid character: %c", invalidChar);
-				return FILENAME_INVALIDCHARACTERS;
-			}
-		}
-	}
-
-	if (argc == 3)
-	{
-		int a, b, c, d;
-		char* ipAddress = argv[2];
-		if (sscanf(ipAddress, "%d.%d.%d.%d", &a, &b, &c, &d))
-		{
-			mode = Client;
-			address = Address(a, b, c, d, ServerPort);
-		}
-		else
-		{
-			printf("IP Address is not in proper format: %c", ipAddress);
-			return IPADDRESS_INVALIDFORMAT;
-		}
-	}
-	else if (argc > 3)
+	if (argc > 3)
 	{
 		displayHelp();
 		return ARGUMENT_INVALIDNUMBER;
+	}
+
+	char ipAddress[kIPAddressSize] = {};
+	char fileName[kFileNameSize] = {};
+	if (argc < 3)
+	{
+		strcpy(ipAddress, kIPAddressDefault);
+	}
+	else
+	{
+		strcpy(ipAddress, argv[2]);
+	}
+
+	if (argc < 2)
+	{
+		strcpy(fileName, kFileNameDefault);
+	}
+	else
+	{
+		strcpy(fileName, argv[1]);
+	}
+
+	if (strlen(fileName) > kFileNameSize)
+	{
+		printf("Filename should not be longer than %d characters", kFileNameSize);
+		return FILENAME_TOOLONG;
+	}
+
+	for (int i = 0; i < sizeof(kInvalidFilenameChars); i++)
+	{
+		char invalidChar = kInvalidFilenameChars[i];
+		if (strchr(fileName, invalidChar) != NULL)
+		{
+			printf("Filename has invalid character: %c", invalidChar);
+			return FILENAME_INVALIDCHARACTERS;
+		}
+	}
+
+	int a, b, c, d;
+	if (sscanf(ipAddress, "%d.%d.%d.%d", &a, &b, &c, &d))
+	{
+		mode = Client;
+		address = Address(a, b, c, d, ServerPort);
+	}
+	else
+	{
+		printf("IP Address is not in proper format: %s", ipAddress);
+		return IPADDRESS_INVALIDFORMAT;
 	}
 
 	// initialize
@@ -241,33 +253,27 @@ int main(int argc, char* argv[])
 	unsigned char iPacket[kPacketSize];
 	if (mode == Client)
 	{
-		file = fopen(iFileName, "rb");
+		file = fopen(fileName, "rb");
 		if (file == NULL)
 		{
-			printf("Cannot open file: %s", iFileName);
+			printf("Cannot open file: %s", fileName);
 			return FILE_CANNOTOPEN;
-			fseek(file, 0L, SEEK_END);
-			fileSize = ftell(file);
-			rewind(file);
-			iPacketTotal = (fileSize / kFileContentSize) + 1;
-			
 		}
+
+		fseek(file, 0L, SEEK_END);
+		fileSize = ftell(file);
+		rewind(file);
+		iPacketTotal = (fileSize / kFileContentSize) + 1;
 	}
-	FILE* ofile = NULL;
-	if (mode == Server)
+	else if (mode == Server)
 	{
-		ofile = fopen(iFileName, "wb");
-		if (ofile == NULL)
+		file = fopen(fileName, "wb");
+		if (file == NULL)
 		{
-			printf("Cannot open file: %s", iFileName);
+			printf("Cannot open file: %s\n", fileName);
 			return FILE_CANNOTOPEN;
 		}
 	}
-
-	
-	
-	
-
 
 	bool connected = false;
 	float sendAccumulator = 0.0f;
@@ -330,7 +336,7 @@ int main(int argc, char* argv[])
 			{
 				if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
 				{
-					packData(iPacket, iFileName, iPacketTotal, iPacketOrder, iFileContent);
+					packData(iPacket, fileName, iPacketTotal, iPacketOrder, iFileContent);
 					if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
 					{
 						iPacketOrder++;
@@ -372,12 +378,10 @@ int main(int argc, char* argv[])
 					printf("\nOK: %d", status);
 					if (status == 1)
 					{
-						fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), ofile);
+						fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), file);
 						iPacketOrder++;
 					}
 				}
-
-
 			}
 
 			// show packets that were acked this frame
@@ -424,10 +428,9 @@ int main(int argc, char* argv[])
 
 			net::wait(DeltaTime);
 		}
-		fclose(file);
-		fclose(ofile);
-		ShutdownSockets();
-
-		return 0;
 	}
+	fclose(file);
+	ShutdownSockets();
+
+	return 0;
 }
