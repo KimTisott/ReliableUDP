@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 	char fileName[kFileNameSize] = {};
 	if (argc < 3)
 	{
-		strcpy(ipAddress, kIPAddressDefault);
+		//strcpy(ipAddress, kIPAddressDefault);
 	}
 	else
 	{
@@ -194,16 +194,19 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	int a, b, c, d;
-	if (sscanf(ipAddress, "%d.%d.%d.%d", &a, &b, &c, &d))
+	if (strlen(ipAddress))
 	{
-		mode = Client;
-		address = Address(a, b, c, d, ServerPort);
-	}
-	else
-	{
-		printf("IP Address is not in proper format: %s", ipAddress);
-		return IPADDRESS_INVALIDFORMAT;
+		int a, b, c, d;
+		if (sscanf(ipAddress, "%d.%d.%d.%d", &a, &b, &c, &d) == 4)
+		{
+			mode = Client;
+			address = Address(a, b, c, d, ServerPort);
+		}
+		else
+		{
+			printf("IP Address is not in proper format: %s", ipAddress);
+			return IPADDRESS_INVALIDFORMAT;
+		}
 	}
 
 	// initialize
@@ -241,16 +244,12 @@ int main(int argc, char* argv[])
 	*/
 	FILE* file = NULL;
 	int fileSize = 0;
-	unsigned short iPacketTotal = 0;
-	unsigned short iPacketOrder = 0;
-	unsigned char iFileContent[kFileContentSize];
-	char oFileName[kFileNameSize + 1];
-	unsigned short oPacketTotal = 0;
-	unsigned short oPacketOrder = 0;
-	unsigned char oFileContent[kFileContentSize];
-	char oChecksum[kChecksumSize + 1];
+	unsigned short packetTotal = 0;
+	unsigned short packetOrder = 0;
+	unsigned char fileContent[kFileContentSize];
+	char checksum[kChecksumSize];
 	size_t bytesRead;
-	unsigned char iPacket[kPacketSize];
+	unsigned char packet[kPacketSize];
 	if (mode == Client)
 	{
 		file = fopen(fileName, "rb");
@@ -262,7 +261,7 @@ int main(int argc, char* argv[])
 		fseek(file, 0L, SEEK_END);
 		fileSize = ftell(file);
 		rewind(file);
-		iPacketTotal = (fileSize / kFileContentSize) + 1;
+		packetTotal = (fileSize / kFileContentSize) + 1;
 	}
 	else if (mode == Server)
 	{
@@ -332,12 +331,12 @@ int main(int argc, char* argv[])
 			{
 				if (!feof(file))
 				{
-					if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
+					if ((bytesRead = fread(fileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
 					{
-						packData(iPacket, fileName, iPacketTotal, iPacketOrder, iFileContent);
-						if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
+						packData(packet, fileName, packetTotal, packetOrder, fileContent);
+						if (connection.SendPacket((const unsigned char*)packet, sizeof(packet)))
 						{
-							iPacketOrder++;
+							packetOrder++;
 						}
 					}
 					
@@ -366,18 +365,18 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				unpackData(iPacket, oFileName, &oPacketTotal, &oPacketOrder, oFileContent, oChecksum);
-				printf("\nFile Name: %s", oFileName);
-				printf("\nPacket Total: %d", oPacketTotal);
-				printf("\nPacket Order: %d", oPacketOrder);
-				printf("\nFile Content: %s", oFileContent);
-				printf("\nChecksum: %s", oChecksum);
-				int status = compareChecksum(oChecksum, iPacket);
+				unpackData(packet, fileName, &packetTotal, &packetOrder, fileContent, checksum);
+				printf("\nFile Name: %s", fileName);
+				printf("\nPacket Total: %d", packetTotal);
+				printf("\nPacket Order: %d", packetOrder);
+				printf("\nFile Content: %s", fileContent);
+				printf("\nChecksum: %s", checksum);
+				int status = compareChecksum(checksum, packet);
 				printf("\nOK: %d", status);
 				if (status == 1)
 				{
-					fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), file);
-					iPacketOrder++;
+					fwrite(fileContent, kFileContentSize, sizeof(unsigned char), file);
+					packetOrder++;
 				}
 			}
 		}
