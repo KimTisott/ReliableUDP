@@ -339,7 +339,6 @@ int main(int argc, char* argv[])
 							packetOrder++;
 						}
 					}
-					
 				}
 				else
 				{
@@ -347,6 +346,11 @@ int main(int argc, char* argv[])
 					ShutdownSockets();
 					return 0;
 				}
+			}
+			else
+			{
+				memset(packet, 0, sizeof(packet));
+				connection.SendPacket((const unsigned char*)packet, sizeof(packet));
 			}
 			else
 			{
@@ -377,7 +381,6 @@ int main(int argc, char* argv[])
 			else
 			{
 				unpackData(packet, fileName, &packetTotal, &packetOrder, fileContent, checksum);
-				
 				if (compareChecksum(checksum, packet))
 				{
 					fwrite(fileContent, kFileContentSize, sizeof(unsigned char), file);
