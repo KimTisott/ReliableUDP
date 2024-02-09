@@ -341,6 +341,17 @@ int main(int argc, char* argv[])
 					}
 					
 				}
+				else
+				{
+					fclose(file);
+					ShutdownSockets();
+					return 0;
+				}
+			}
+			else
+			{
+				memset(packet, 0, sizeof(packet));
+				connection.SendPacket((const unsigned char*)packet, sizeof(packet));
 			}
 			sendAccumulator -= 1.0f / sendRate;
 		}
@@ -366,14 +377,8 @@ int main(int argc, char* argv[])
 			else
 			{
 				unpackData(packet, fileName, &packetTotal, &packetOrder, fileContent, checksum);
-				printf("\nFile Name: %s", fileName);
-				printf("\nPacket Total: %d", packetTotal);
-				printf("\nPacket Order: %d", packetOrder);
-				printf("\nFile Content: %s", fileContent);
-				printf("\nChecksum: %s", checksum);
-				int status = compareChecksum(checksum, packet);
-				printf("\nOK: %d", status);
-				if (status == 1)
+				
+				if (compareChecksum(checksum, packet))
 				{
 					fwrite(fileContent, kFileContentSize, sizeof(unsigned char), file);
 				}
