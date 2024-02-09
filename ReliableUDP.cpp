@@ -352,11 +352,6 @@ int main(int argc, char* argv[])
 				memset(packet, 0, sizeof(packet));
 				connection.SendPacket((const unsigned char*)packet, sizeof(packet));
 			}
-			else
-			{
-				memset(packet, 0, sizeof(packet));
-				connection.SendPacket((const unsigned char*)packet, sizeof(packet));
-			}
 			sendAccumulator -= 1.0f / sendRate;
 		}
 
