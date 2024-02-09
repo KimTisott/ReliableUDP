@@ -245,11 +245,11 @@ int main(int argc, char* argv[])
 	FILE* file = NULL;
 	int fileSize = 0;
 	unsigned short packetTotal = 0;
-	unsigned short packetOrder = 0;
-	unsigned char fileContent[kFileContentSize];
-	char checksum[kChecksumSize];
+	unsigned short packetOrder = 1;
+	unsigned char fileContent[kFileContentSize] = {};
+	char checksum[kChecksumSize] = {};
 	size_t bytesRead;
-	unsigned char packet[kPacketSize];
+	unsigned char packet[kPacketSize] = {};
 	if (mode == Client)
 	{
 		file = fopen(fileName, "rb");
@@ -357,7 +357,7 @@ int main(int argc, char* argv[])
 			* If it's OK, write to the disk
 			*
 			*/
-			unsigned char packet[kPacketSize];
+			unsigned char packet[kPacketSize] = {};
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 			{
@@ -376,7 +376,6 @@ int main(int argc, char* argv[])
 				if (status == 1)
 				{
 					fwrite(fileContent, kFileContentSize, sizeof(unsigned char), file);
-					packetOrder++;
 				}
 			}
 		}

@@ -24,7 +24,7 @@ void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize], s
     memcpy(packet + kFileNameSize, &packetTotal, kPacketTotalSize);
     memcpy(packet + kFileNameSize + kPacketTotalSize, &packetOrder, kPacketOrderSize);
     memcpy(packet + kFileNameSize + kPacketTotalSize + kPacketOrderSize, fileContent, kFileContentSize);
-    char checksum[kChecksumSize + 1];
+    char checksum[kChecksumSize + 1] = {};
     generateChecksum(checksum, packet);
     checksum[kChecksumSize] = '\0';
     memcpy(packet + kFileNameSize + kPacketTotalSize + kPacketOrderSize + kFileContentSize, checksum, kChecksumSize);
@@ -52,7 +52,7 @@ void generateChecksum(char checksum[kChecksumSize], unsigned char packet[kPacket
 
 int compareChecksum(char checksum[kChecksumSize], unsigned char packet[kPacketSize])
 {
-    char generatedChecksum[kChecksumSize];
+    char generatedChecksum[kChecksumSize] = {};
     generateChecksum(generatedChecksum, packet);
 
     for (int i = 0; i < kChecksumSize; i++)
