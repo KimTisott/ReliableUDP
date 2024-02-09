@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "ReliableUDP.h"
+#include "A1.h"
 #include "Net.h"
 #pragma warning(disable : 4996)
 
@@ -149,40 +149,49 @@ int main(int argc, char* argv[])
 		if (strcmp(argv[i], "-h") == 0)
 		{
 			displayHelp();
-			return kErrorNum;
+			return 0;
 		}
 	}
-	if (argc == 3)
+
+	if (argc > 1)
 	{
-		char* filenameArg = argv[1];
-		if (strlen(filenameArg) > kFileNameSize)
+		char* fileName = argv[1];
+		if (strlen(fileName) > kFileNameSize)
 		{
 			printf("Filename should not be longer than %d characters", kFileNameSize);
-			return kErrorNum;
+			return FILENAME_TOOLONG;
 		}
 
 		for (int i = 0; i < sizeof(kInvalidFilenameChars); i++)
 		{
 			char invalidChar = kInvalidFilenameChars[i];
-			if (strchr(iFileName, invalidChar) != NULL)
+			if (strchr(fileName, invalidChar) != NULL)
 			{
 				printf("Filename has invalid character: %c", invalidChar);
-				return kErrorNum;
+				return FILENAME_INVALIDCHARACTERS;
 			}
 		}
+	}
 
+	if (argc == 3)
+	{
 		int a, b, c, d;
-		if (sscanf(argv[2], "%d.%d.%d.%d", &a, &b, &c, &d))
+		char* ipAddress = argv[2];
+		if (sscanf(ipAddress, "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
 		}
-		strcpy(iFileName, filenameArg);
+		else
+		{
+			printf("IP Address is not in proper format: %c", ipAddress);
+			return IPADDRESS_INVALIDFORMAT;
+		}
 	}
-	else if (argc != 1)
+	else if (argc > 3)
 	{
 		displayHelp();
-		return kErrorNum;
+		return ARGUMENT_INVALIDNUMBER;
 	}
 
 	// initialize
@@ -236,7 +245,7 @@ int main(int argc, char* argv[])
 		if (file == NULL)
 		{
 			printf("Cannot open file: %s", iFileName);
-			return kErrorNum;
+			return FILE_CANNOTOPEN;
 			fseek(file, 0L, SEEK_END);
 			fileSize = ftell(file);
 			rewind(file);
@@ -251,7 +260,7 @@ int main(int argc, char* argv[])
 		if (ofile == NULL)
 		{
 			printf("Cannot open file: %s", iFileName);
-			return kErrorNum;
+			return FILE_CANNOTOPEN;
 		}
 	}
 

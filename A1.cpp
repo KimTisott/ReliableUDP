@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "ReliableUDP.h"
+#include "A1.h"
 #include "hash-library/md5.h"
 #include "hash-library/md5.cpp"
 
@@ -8,7 +8,6 @@
 
 const char* kPacketDelimiter = "|";
 const int kNumericBase = 10;
-
 
 void displayHelp()
 {
@@ -19,61 +18,6 @@ void displayHelp()
     printf(" -h             :       Display help\n");
 }
 
-static char* packData(char *fileName, short packetTotal, short packetOrder, char *fileContent)
-{
-    char packet[kPacketSize];
-
-    strcpy(packet, fileName);
-
-    strcpy(packet, "|");
-
-    char totalString[sizeof(short)];
-    itoa(packetTotal, totalString, kNumericBase);
-    strcpy(packet, totalString);
-
-    strcpy(packet, "|");
-
-    char orderString[sizeof(short)];
-    itoa(packetOrder, orderString, kNumericBase);
-    strcpy(packet, orderString);
-
-    strcpy(packet, "|");
-
-    strcpy(packet, fileContent);
-
-    return packet;
-}
-
-static void unpackData(char *packet, char *fileName, int packetTotal, int packetOrder, char *fileContent)
-{
-    char* token = NULL;
-    for (int i = 0; i < 4; i++)
-    {
-        token = strtok(packet, kPacketDelimiter);
-        if (token != NULL)
-        {
-            switch (i)
-            {
-                case 0:
-                {
-                    strcpy(fileName, token);
-                }
-                case 1:
-                {
-                    packetTotal = atoi(token);
-                }
-                case 2:
-                {
-                    packetOrder = atoi(token);
-                }
-                case 3:
-                {
-                    strcpy(fileContent, token);
-                }
-            }
-        }
-    }
-}
 void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize], short packetTotal, short packetOrder, unsigned char fileContent[kFileContentSize])
 {
     memcpy(packet + kUdpHeaderSize, fileName, kFileNameSize);
