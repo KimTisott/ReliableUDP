@@ -334,7 +334,7 @@ int main(int argc, char* argv[])
 				{
 					if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
 					{
-						packData(iPacket, iFileName, iPacketTotal, iPacketOrder, iFileContent);
+						packData(iPacket, fileName, iPacketTotal, iPacketOrder, iFileContent);
 						if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
 						{
 							iPacketOrder++;
