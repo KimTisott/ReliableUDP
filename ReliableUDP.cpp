@@ -259,7 +259,6 @@ int main(int argc, char* argv[])
 			printf("Cannot open file: %s", fileName);
 			return FILE_CANNOTOPEN;
 		}
-
 		fseek(file, 0L, SEEK_END);
 		fileSize = ftell(file);
 		rewind(file);
@@ -274,7 +273,7 @@ int main(int argc, char* argv[])
 			return FILE_CANNOTOPEN;
 		}
 	}
-
+	
 	bool connected = false;
 	float sendAccumulator = 0.0f;
 	float statsAccumulator = 0.0f;
@@ -329,105 +328,103 @@ int main(int argc, char* argv[])
 			* CLIENT send file metadata and checksum firstly and then
 			* put each piece into a packet and send the packet using SendPacket
 			*/
-
-
-
-			if (!feof(file))
+			if (mode == Client)
 			{
-				if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
+				if (!feof(file))
 				{
-					packData(iPacket, fileName, iPacketTotal, iPacketOrder, iFileContent);
-					if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
+					if ((bytesRead = fread(iFileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
 					{
-						iPacketOrder++;
+						packData(iPacket, iFileName, iPacketTotal, iPacketOrder, iFileContent);
+						if (connection.SendPacket((const unsigned char*)iPacket, sizeof(iPacket)))
+						{
+							iPacketOrder++;
+						}
 					}
-				}
-
-
-
-				sendAccumulator -= 1.0f / sendRate;
-			}
-
-			while (true)
-			{
-				/*
-				* SERVER is going to receive metadata and content
-				* in the packet and store it into a buffer to
-				* pack the pieces when the last packet is
-				* received.
-				* When the last packet is received,
-				* SERVER should check for checksum
-				* If it's OK, write to the disk
-				*
-				*/
-				unsigned char packet[kPacketSize];
-				int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
-				if (bytes_read == 0)
-				{
-					break;
-				}
-				else
-				{
-					unpackData(iPacket, oFileName, &oPacketTotal, &oPacketOrder, oFileContent, oChecksum);
-					printf("\nFile Name: %s", oFileName);
-					printf("\nPacket Total: %d", oPacketTotal);
-					printf("\nPacket Order: %d", oPacketOrder);
-					printf("\nFile Content: %s", oFileContent);
-					printf("\nChecksum: %s", oChecksum);
-					int status = compareChecksum(oChecksum, iPacket);
-					printf("\nOK: %d", status);
-					if (status == 1)
-					{
-						fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), file);
-						iPacketOrder++;
-					}
+					
 				}
 			}
+			sendAccumulator -= 1.0f / sendRate;
+		}
 
-			// show packets that were acked this frame
+		while (true)
+		{
+			/*
+			* SERVER is going to receive metadata and content
+			* in the packet and store it into a buffer to
+			* pack the pieces when the last packet is
+			* received.
+			* When the last packet is received,
+			* SERVER should check for checksum
+			* If it's OK, write to the disk
+			*
+			*/
+			unsigned char packet[kPacketSize];
+			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
+			if (bytes_read == 0)
+			{
+				break;
+			}
+			else
+			{
+				unpackData(iPacket, oFileName, &oPacketTotal, &oPacketOrder, oFileContent, oChecksum);
+				printf("\nFile Name: %s", oFileName);
+				printf("\nPacket Total: %d", oPacketTotal);
+				printf("\nPacket Order: %d", oPacketOrder);
+				printf("\nFile Content: %s", oFileContent);
+				printf("\nChecksum: %s", oChecksum);
+				int status = compareChecksum(oChecksum, iPacket);
+				printf("\nOK: %d", status);
+				if (status == 1)
+				{
+					fwrite(oFileContent, kFileContentSize, sizeof(unsigned char), file);
+					iPacketOrder++;
+				}
+			}
+		}
+
+		// show packets that were acked this frame
 
 #ifdef SHOW_ACKS
-			unsigned int* acks = NULL;
-			int ack_count = 0;
-			connection.GetReliabilitySystem().GetAcks(&acks, ack_count);
-			if (ack_count > 0)
-			{
-				printf("acks: %d", acks[0]);
-				for (int i = 1; i < ack_count; ++i)
-					printf(",%d", acks[i]);
-				printf("\n");
-			}
+		unsigned int* acks = NULL;
+		int ack_count = 0;
+		connection.GetReliabilitySystem().GetAcks(&acks, ack_count);
+		if (ack_count > 0)
+		{
+			printf("acks: %d", acks[0]);
+			for (int i = 1; i < ack_count; ++i)
+				printf(",%d", acks[i]);
+			printf("\n");
+		}
 #endif
 
-			// update connection
+		// update connection
 
-			connection.Update(DeltaTime);
+		connection.Update(DeltaTime);
 
-			// show connection stats
+		// show connection stats
 
-			statsAccumulator += DeltaTime;
+		statsAccumulator += DeltaTime;
 
-			while (statsAccumulator >= 0.25f && connection.IsConnected())
-			{
-				float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
+		while (statsAccumulator >= 0.25f && connection.IsConnected())
+		{
+			float rtt = connection.GetReliabilitySystem().GetRoundTripTime();
 
-				unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
-				unsigned int acked_packets = connection.GetReliabilitySystem().GetAckedPackets();
-				unsigned int lost_packets = connection.GetReliabilitySystem().GetLostPackets();
+			unsigned int sent_packets = connection.GetReliabilitySystem().GetSentPackets();
+			unsigned int acked_packets = connection.GetReliabilitySystem().GetAckedPackets();
+			unsigned int lost_packets = connection.GetReliabilitySystem().GetLostPackets();
 
-				float sent_bandwidth = connection.GetReliabilitySystem().GetSentBandwidth();
-				float acked_bandwidth = connection.GetReliabilitySystem().GetAckedBandwidth();
+			float sent_bandwidth = connection.GetReliabilitySystem().GetSentBandwidth();
+			float acked_bandwidth = connection.GetReliabilitySystem().GetAckedBandwidth();
 
-				printf("rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n",
-					rtt * 1000.0f, sent_packets, acked_packets, lost_packets,
-					sent_packets > 0.0f ? (float)lost_packets / (float)sent_packets * 100.0f : 0.0f,
-					sent_bandwidth, acked_bandwidth);
+			printf("rtt %.1fms, sent %d, acked %d, lost %d (%.1f%%), sent bandwidth = %.1fkbps, acked bandwidth = %.1fkbps\n",
+				rtt * 1000.0f, sent_packets, acked_packets, lost_packets,
+				sent_packets > 0.0f ? (float)lost_packets / (float)sent_packets * 100.0f : 0.0f,
+				sent_bandwidth, acked_bandwidth);
 
-				statsAccumulator -= 0.25f;
-			}
-
-			net::wait(DeltaTime);
+			statsAccumulator -= 0.25f;
 		}
+
+		net::wait(DeltaTime);
 	}
 	fclose(file);
 	ShutdownSockets();
