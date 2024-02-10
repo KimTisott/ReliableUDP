@@ -19,7 +19,7 @@ enum A1ERROR {
 
 void displayHelp();
 double getTime();
-void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize], short packetTotal, short packetOrder, unsigned char fileContent[kFileContentSize]);
+void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize+1], short packetTotal, short packetOrder, unsigned char fileContent[kFileContentSize]);
 void unpackData(unsigned char packet[kPacketSize], char fileName[kFileNameSize + 1], unsigned short* packetTotal, unsigned short* packetOrder, unsigned char fileContent[kFileContentSize], char checksum[kChecksumSize + 1]);
 void generateChecksum(char checksum[kChecksumSize], unsigned char packet[kPacketSize]);
 int compareChecksum(char checksum[kChecksumSize], unsigned char packet[kPacketSize]);
