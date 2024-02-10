@@ -159,7 +159,6 @@ int main(int argc, char* argv[])
 	}
 
 	char ipAddress[kIPAddressSize] = {};
-	int corruptedPacketCounter = 0;
 	char fileName[kFileNameSize] = {};
 	if (argc < 3)
 	{
@@ -351,10 +350,7 @@ int main(int argc, char* argv[])
 				{
 					double transmissionTime = getTime() - start;
 					printf("\nTransfer time %.0fms, Transfer speed: %f Mbit/s\n", transmissionTime,((double)fileSize/transmissionTime)/125);
-					if (corruptedPacketCounter > 0)
-					{
-						printf("Nunmber of corrupted packets are: %d\n", corruptedPacketCounter);
-					}
+					
 					fclose(file);
 					ShutdownSockets();
 					return 0;
@@ -392,10 +388,6 @@ int main(int argc, char* argv[])
 				if (compareChecksum(checksum, packet))
 				{
 					fwrite(fileContent, kFileContentSize, sizeof(unsigned char), file);
-				}
-				else
-				{
-					corruptedPacketCounter++;
 				}
 			}
 		}
