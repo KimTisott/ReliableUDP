@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 	}
 
 	char ipAddress[kIPAddressSize] = {};
-	char fileName[kFileNameSize] = {};
+	char fileName[kFileNameSize+1] = {};
 	if (argc < 3)
 	{
 		//strcpy(ipAddress, kIPAddressDefault);
@@ -247,7 +247,7 @@ int main(int argc, char* argv[])
 	unsigned short packetTotal = 0;
 	unsigned short packetOrder = 1;
 	unsigned char fileContent[kFileContentSize] = {};
-	char checksum[kChecksumSize] = {};
+	char checksum[kChecksumSize+1] = {};
 	size_t bytesRead;
 	unsigned char packet[kPacketSize] = {};
 	if (mode == Client)
