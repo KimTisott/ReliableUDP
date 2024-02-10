@@ -276,7 +276,8 @@ int main(int argc, char* argv[])
 	bool connected = false;
 	float sendAccumulator = 0.0f;
 	float statsAccumulator = 0.0f;
-
+	bool firstPacket = true;
+	double start;
 	FlowControl flowControl;
 
 	/*
@@ -329,6 +330,11 @@ int main(int argc, char* argv[])
 			*/
 			if (mode == Client)
 			{
+				if (firstPacket)
+				{
+					start = getTime();
+					firstPacket = false;
+				}
 				if (!feof(file))
 				{
 					if ((bytesRead = fread(fileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
@@ -342,6 +348,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
+					printf("\ntransmission time %.3fus", getTime() - start);
 					fclose(file);
 					ShutdownSockets();
 					return 0;

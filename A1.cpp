@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <windows.h>
 #include "A1.h"
 #include "hash-library/md5.h"
 #include "hash-library/md5.cpp"
@@ -64,4 +65,14 @@ int compareChecksum(char checksum[kChecksumSize], unsigned char packet[kPacketSi
     }
 
     return 1;
+}
+
+double getTime()
+{
+    LARGE_INTEGER t, f;
+
+    QueryPerformanceCounter(&t);
+    QueryPerformanceFrequency(&f);
+
+    return (double)t.QuadPart * 1000000 / (double)f.QuadPart;
 }
