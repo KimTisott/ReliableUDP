@@ -4,6 +4,14 @@
 	Author: Glenn Fiedler <gaffer@gaffer.org>
 */
 
+/*
+ FILE: ReliableUDP.cpp
+ PROJECT: SENG2040 - Assignment #1
+ PROGRAMMER: Quan Khuong - Kim Tisott
+ Author: Glenn Fiedler <gaffer@gaffer.org>
+ DESCRIPTION: The file include main.
+ */
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -119,13 +127,6 @@ private:
 
 int main(int argc, char* argv[])
 {
-	// Method to get hash from the string
-	/*
-	*	std::string text = "hello world";
-	*	MD5 md5;
-	*	md5.add(text.c_str(), text.size());
-	*	cout << md5.getHash();
-	*/
 
 	// parse command line
 
@@ -137,12 +138,9 @@ int main(int argc, char* argv[])
 
 	Mode mode = Server;
 	Address address;
-	/*
-	* We have to introduce a new argument as a file name
-	* We are going to put it as the first argument and make it mandatory
-	* We are going to change argc>=2 -> argc >= 3 and validate the
-	* file name on argv[1] as well as IP Address on argv[2]
-	*/
+	
+	
+	//Find and display the help menu once the user enter -h
 	for (int i = 0; i < argc; i++)
 	{
 		if (strcmp(argv[i], "-h") == 0)
@@ -152,6 +150,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// More than needed argument
 	if (argc > 3)
 	{
 		displayHelp();
@@ -178,12 +177,14 @@ int main(int argc, char* argv[])
 		strcpy(fileName, argv[1]);
 	}
 
+	// Display error message if the file name is longer than the limit
 	if (strlen(fileName) > kFileNameSize)
 	{
 		printf("Filename should not be longer than %d characters", kFileNameSize);
 		return FILENAME_TOOLONG;
 	}
 
+	// Check for invalid character character in the file name
 	for (int i = 0; i < sizeof(kInvalidFilenameChars); i++)
 	{
 		char invalidChar = kInvalidFilenameChars[i];
@@ -194,9 +195,11 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// If there is an argument for IP Address, check the IP Address
 	if (strlen(ipAddress))
 	{
 		int a, b, c, d;
+		// Check the format of the IP Address
 		if (sscanf(ipAddress, "%d.%d.%d.%d", &a, &b, &c, &d) == 4)
 		{
 			mode = Client;
@@ -232,16 +235,12 @@ int main(int argc, char* argv[])
 	else
 		connection.Listen();
 
-	/*
-	*
-	* CLIENT check the file is there or not
-	* before open the connection.
-	* Also, checking for its content. If the file is empty,
-	* print an error message and stop the program.
-	* SERVER will do File/IO error handling, if
-	* the file cannot be opened, stop the program.
-	*
-	*/
+	 /* 
+	 * Open the FILE stream and open the file
+	 * for read or write depends on if the 
+	 * application is running in Client or
+	 * in Server mode 
+	 */
 	FILE* file = NULL;
 	int fileSize = 0;
 	unsigned short packetTotal = 0;
@@ -258,9 +257,13 @@ int main(int argc, char* argv[])
 			printf("Cannot open file: %s", fileName);
 			return FILE_CANNOTOPEN;
 		}
+
+		// Find the size of the file
 		fseek(file, 0L, SEEK_END);
 		fileSize = ftell(file);
 		rewind(file);
+
+		// Calculate total packet number that is needed to send
 		packetTotal = (fileSize / kFileContentSize) + 1;
 	}
 	else if (mode == Server)
@@ -280,14 +283,7 @@ int main(int argc, char* argv[])
 	double start;
 	FlowControl flowControl;
 
-	/*
-	* CLIENT ONLY
-	* Open the validated file and get its metadata (file name and file size)
-	* and file content
-	*
-	* Calculate how many packet that is needed to send
-	* and split the file into pieces to be sent
-	*/
+
 	while (true)
 	{
 		// update flow control
@@ -325,8 +321,10 @@ int main(int argc, char* argv[])
 		while (sendAccumulator > 1.0f / sendRate)
 		{
 			/*
-			* CLIENT send file metadata and checksum firstly and then
-			* put each piece into a packet and send the packet using SendPacket
+			* CLIENT to check to see if it is the first packet or
+			* not to start the timer and call the pack data to
+			* pack everything into a packet to send to the receiver
+			* using sendpacket
 			*/
 			if (mode == Client)
 			{
@@ -337,6 +335,7 @@ int main(int argc, char* argv[])
 				}
 				if (!feof(file))
 				{
+					// Keep on reading until it reaches end of file
 					if ((bytesRead = fread(fileContent, sizeof(unsigned char), kFileContentSize, file)) != 0)
 					{
 						packData(packet, fileName, packetTotal, packetOrder, fileContent);
@@ -346,16 +345,21 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
+				// There is no more packet
 				else
 				{
+					// Get the time from the start until this point
 					double transmissionTime = getTime() - start;
 					printf("\nTransfer time %.0fms, Transfer speed: %f Mbit/s\n", transmissionTime,((double)fileSize/transmissionTime)/125);
-					
+
+					// Close the file and shutdown the socket
 					fclose(file);
 					ShutdownSockets();
 					return 0;
 				}
 			}
+
+			// SERVER will send an empty packet to set ack bit
 			else
 			{
 				memset(packet, 0, sizeof(packet));
@@ -367,14 +371,7 @@ int main(int argc, char* argv[])
 		while (true)
 		{
 			/*
-			* SERVER is going to receive metadata and content
-			* in the packet and store it into a buffer to
-			* pack the pieces when the last packet is
-			* received.
-			* When the last packet is received,
-			* SERVER should check for checksum
-			* If it's OK, write to the disk
-			*
+			* The server will receive the data here
 			*/
 			unsigned char packet[kPacketSize] = {};
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
@@ -385,6 +382,8 @@ int main(int argc, char* argv[])
 			else
 			{
 				unpackData(packet, fileName, &packetTotal, &packetOrder, fileContent, checksum);
+
+				// If the packet arrive correctly, then write into the file
 				if (compareChecksum(checksum, packet))
 				{
 					fwrite(fileContent, kFileContentSize, sizeof(unsigned char), file);
