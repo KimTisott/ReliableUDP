@@ -19,7 +19,7 @@ void displayHelp()
     printf(" -h             :       Display help\n");
 }
 
-void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize+1], short packetTotal, short packetOrder, unsigned char fileContent[kFileContentSize])
+void packData(unsigned char packet[kPacketSize], char fileName[kFileNameSize], short packetTotal, short packetOrder, unsigned char fileContent[kFileContentSize])
 {
     memcpy(packet, fileName, kFileNameSize);
     memcpy(packet + kFileNameSize, &packetTotal, kPacketTotalSize);

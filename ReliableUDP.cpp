@@ -159,8 +159,8 @@ int main(int argc, char* argv[])
 	}
 
 	char ipAddress[kIPAddressSize] = {};
-	char fileName[kFileNameSize+1] = {};
 	int corruptedPacketCounter = 0;
+	char fileName[kFileNameSize] = {};
 	if (argc < 3)
 	{
 		//strcpy(ipAddress, kIPAddressDefault);
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
 	unsigned short packetTotal = 0;
 	unsigned short packetOrder = 1;
 	unsigned char fileContent[kFileContentSize] = {};
-	char checksum[kChecksumSize+1] = {};
+	char checksum[kChecksumSize] = {};
 	size_t bytesRead;
 	unsigned char packet[kPacketSize] = {};
 	if (mode == Client)
