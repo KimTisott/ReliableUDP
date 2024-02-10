@@ -74,5 +74,5 @@ double getTime()
     QueryPerformanceCounter(&t);
     QueryPerformanceFrequency(&f);
 
-    return (double)t.QuadPart * 1000000 / (double)f.QuadPart;
+    return (double)t.QuadPart * 1000 / (double)f.QuadPart;
 }

@@ -348,7 +348,8 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
-					printf("\ntransmission time %.3fus", getTime() - start);
+					double transmissionTime = getTime() - start;
+					printf("\nTransfer time %.0fms, Transfer speed: %f Mbit/s\n", transmissionTime,((double)fileSize/transmissionTime)/125);
 					fclose(file);
 					ShutdownSockets();
 					return 0;
