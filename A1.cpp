@@ -26,10 +26,12 @@
 void displayHelp()
 {
     printf(" Usage: \n");
-    printf(" ReliableUDP [INPUT_FILE] [IPADDRESS] [-h]\n");
+    printf(" ReliableUDP [INPUT_FILE] [IPADDRESS] [-h]  :       Run as CLIENT with INPUTFILE and IPADDRESS\n");
+    printf(" ReliableUDP [OUTPUT_FILE]                  :       Run as SERVER and write to OUTPUTFILE\n");
     printf(" INPUT_FILE     :       FILENAME is the INPUT file name \n");
     printf(" IPADDRESS      :       IP ADDRESS in IPv4 format (x.x.x.x) \n");
     printf(" -h             :       Display help\n");
+    
 }
 
 
